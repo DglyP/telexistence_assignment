@@ -2,54 +2,58 @@ using UnityEngine;
 using UniRx;
 using TMPro;
 using VContainer;
+using System;
 
 public class ClockUI : MonoBehaviour
     {
     [SerializeField] private TMP_Text clockText;
     [SerializeField] private TMP_Text clockText2;
     [SerializeField] private TMP_Text countdownText;
+    [SerializeField] private TMP_Text stopwatchText;
+    [SerializeField] private TMP_Text lapTimestampText; 
 
     private ISystemClock systemClock;
-    private CountdownButton countdownButton;
+    private ICountdown countdown;
+    private IStopwatch stopwatch;
 
     [Inject]
-    public void Construct(ISystemClock systemClock, CountdownButton countdownButton)
+    public void Construct(ISystemClock systemClock, ICountdown countdown, IStopwatch stopwatch)
         {
         this.systemClock = systemClock;
-        this.countdownButton = countdownButton;
+        this.countdown = countdown;
+        this.stopwatch = stopwatch;
         }
 
     private void Start()
         {
         systemClock.CurrentTime
-            .Subscribe(time => clockText.text = time.ToString("HH:mm:ss"))
+            .Subscribe(time => clockText.text = FormatTime(time))
             .AddTo(this);
 
         systemClock.MyTime
-            .Subscribe(time => clockText2.text = time.ToString("HH:mm:ss"))
+            .Subscribe(time => clockText2.text = FormatTime(time))
+            .AddTo(this);
+
+        countdown.RemainingTime
+            .Subscribe(time => countdownText.text = FormatTimeSpan(time))
+            .AddTo(this);
+
+        stopwatch.ElapsedTime
+            .Subscribe(time => stopwatchText.text = FormatTimeSpan(time))
+            .AddTo(this);
+
+        stopwatch.LapData
+            .Subscribe(lapData => lapTimestampText.text = FormatTime(lapData.Timestamp)) 
             .AddTo(this);
         }
 
-    private void Update()
+    private string FormatTime(DateTimeOffset time)
         {
-        if (countdownText != null)
-            {
-            if (countdownButton != null && countdownButton.IsCountingDown)
-                {
-                float remainingTime = countdownButton.CountdownDuration - (Time.time - countdownButton.CountdownStartTime);
-                countdownText.text = FormatTime(remainingTime);
-                }
-            else
-                {
-                countdownText.text = "No Countdown";
-                }
-            }
+        return time.ToString("HH:mm:ss");
         }
 
-    private string FormatTime(float time)
+    private string FormatTimeSpan(TimeSpan timeSpan)
         {
-        int minutes = Mathf.FloorToInt(time / 60f);
-        int seconds = Mathf.FloorToInt(time % 60f);
-        return string.Format("{0:00}:{1:00}", minutes, seconds);
+        return string.Format("{0:00}:{1:00}:{2:00}:{3:00}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds, timeSpan.Milliseconds);
         }
     }

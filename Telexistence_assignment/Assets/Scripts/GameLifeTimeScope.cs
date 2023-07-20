@@ -6,8 +6,8 @@ public class GameLifeTimeScope : LifetimeScope
     {
     protected override void Configure(IContainerBuilder builder)
         {
-        // Register your dependencies here
         builder.Register<ISystemClock, SystemClock>(Lifetime.Singleton);
-        builder.Register<ISystemClock, TimerClock>(Lifetime.Singleton);
+        builder.Register<ICountdown, Countdown>(Lifetime.Singleton);
+        builder.Register<IStopwatch, Stopwatch>(Lifetime.Singleton);
         }
     }

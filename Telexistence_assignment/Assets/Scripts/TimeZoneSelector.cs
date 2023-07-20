@@ -17,15 +17,12 @@ public class TimeZoneSelector : MonoBehaviour
 
     private void Start()
         {
-        // Initialize the dropdown options with available timezones
         var timeZones = TimeZoneInfo.GetSystemTimeZones();
         dropdown.ClearOptions();
         dropdown.AddOptions(timeZones.Select(tz => tz.DisplayName).ToList());
 
-        // Set the default selected timezone
         systemClock.SelectedTimeZone = timeZones.FirstOrDefault();
 
-        // Subscribe to dropdown value changes and update the selected timezone
         dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
         }
 
