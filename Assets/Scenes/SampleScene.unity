@@ -4110,8 +4110,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a49d07d8ea2bb714889ada562909eab7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clockText: {fileID: 1810851985}
-  clockText2: {fileID: 1309259258}
+  timeZoneText: {fileID: 1810851985}
+  currentTimeText: {fileID: 1309259258}
   countdownText: {fileID: 2074821519}
   stopwatchText: {fileID: 1934499634}
   lapTimestampText: {fileID: 1212153217}

@@ -6,8 +6,8 @@ using System;
 
 public class ClockUI : MonoBehaviour
     {
-    [SerializeField] private TMP_Text clockText;
-    [SerializeField] private TMP_Text clockText2;
+    [SerializeField] private TMP_Text timeZoneText;
+    [SerializeField] private TMP_Text currentTimeText;
     [SerializeField] private TMP_Text countdownText;
     [SerializeField] private TMP_Text stopwatchText;
     [SerializeField] private TMP_Text lapTimestampText; 
@@ -27,11 +27,11 @@ public class ClockUI : MonoBehaviour
     private void Start()
         {
         systemClock.CurrentTime
-            .Subscribe(time => clockText.text = FormatTime(time))
+            .Subscribe(time => timeZoneText.text = FormatTime(time))
             .AddTo(this);
 
         systemClock.MyTime
-            .Subscribe(time => clockText2.text = FormatTime(time))
+            .Subscribe(time => currentTimeText.text = FormatTime(time))
             .AddTo(this);
 
         countdown.RemainingTime
