@@ -8,7 +8,6 @@ public class Countdown : ICountdown
     private ISystemClock systemClock;
     private IDisposable countdownDisposable;
     private Subject<TimeSpan> remainingTimeSubject;
-
     private DateTimeOffset startTime;
     private TimeSpan remainingDuration;
     private TimeSpan originalDuration;

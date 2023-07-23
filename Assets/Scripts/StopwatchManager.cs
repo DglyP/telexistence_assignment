@@ -1,14 +1,13 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using VContainer;
 
 public class StopwatchManager : MonoBehaviour
     {
     [SerializeField] private Button startButton;
-    [SerializeField] private Button stopButton; 
-    [SerializeField] private Button resetButton; 
-    [SerializeField] private Button lapButton; 
+    [SerializeField] private Button lapButton;
 
     private IStopwatch stopwatch;
 
@@ -21,26 +20,44 @@ public class StopwatchManager : MonoBehaviour
     private void Start()
         {
         startButton.onClick.AddListener(StartStopwatch);
-        stopButton.onClick.AddListener(StopStopwatch);
-        resetButton.onClick.AddListener(ResetStopwatch);
         lapButton.onClick.AddListener(LapStopwatch);
         }
+
     public void StartStopwatch()
         {
-        stopwatch.StartStopwatch();
+        if (!stopwatch.IsRunning.Value)
+            {
+            stopwatch.StartStopwatch();
+            startButton.GetComponentInChildren<TMP_Text>().text = "Pause";
+            lapButton.interactable = true;
+            lapButton.GetComponentInChildren<TMP_Text>().text = "Lap";
+            }
+        else
+            {
+            stopwatch.PauseStopwatch();
+            startButton.GetComponentInChildren<TMP_Text>().text = "Resume";
+            lapButton.GetComponentInChildren<TMP_Text>().text = "Reset";
+            }
         }
-
-    public void StopStopwatch()
-        {
-        stopwatch.StopStopwatch();
-        }
-
     public void ResetStopwatch()
         {
+
+        // Reset button states
+        startButton.GetComponentInChildren<TMP_Text>().text = "Start";
+        lapButton.interactable = false;
+        lapButton.GetComponentInChildren<TMP_Text>().text = "Lap";
         stopwatch.ResetStopwatch();
         }
+
     public void LapStopwatch()
         {
-        stopwatch.Lap();
+        if (stopwatch.IsRunning.Value)
+            {
+            stopwatch.Lap();
+            }
+        else
+            {
+            ResetStopwatch();
+            }
         }
     }

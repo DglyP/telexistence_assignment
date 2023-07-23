@@ -26,13 +26,14 @@ public class CountdownStarter : MonoBehaviour
     private void Start()
         {
         startButton.onClick.AddListener(StartCountdown);
-        stopButton.onClick.AddListener(StopCountdown);
         resetButton.onClick.AddListener(ResetCountdown);
         pauseButton.onClick.AddListener(TogglePauseCountdown);
+        stopButton.onClick.AddListener(StopCountdown);
         }
 
     public void StartCountdown()
         {
+        Debug.Log("StartCountdown");
         if (!isCountdownRunning)
             {
             if (isCountdownPaused)
@@ -42,6 +43,9 @@ public class CountdownStarter : MonoBehaviour
             else
                 {
                 countdown.StartCountdown(TimeSpan.FromSeconds(countdownDurationInput));
+                startButton.gameObject.SetActive(false);
+                resetButton?.gameObject.SetActive(true);
+                pauseButton?.gameObject.SetActive(true);
                 }
 
             isCountdownRunning = true;
@@ -51,6 +55,7 @@ public class CountdownStarter : MonoBehaviour
 
     public void StopCountdown()
         {
+        Debug.Log("StopCountdown");
         countdown.StopCountdown();
         isCountdownRunning = false;
         isCountdownPaused = false;
@@ -58,13 +63,19 @@ public class CountdownStarter : MonoBehaviour
 
     public void ResetCountdown()
         {
+        Debug.Log("ResetCountdown");
         countdown.ResetCountdown();
+        startButton.gameObject.SetActive(true);
+        pauseButton?.gameObject.SetActive(false);
+        resetButton?.gameObject.SetActive(false);
+        stopButton?.gameObject.SetActive(false);
         isCountdownRunning = false;
         isCountdownPaused = false;
         }
 
     public void TogglePauseCountdown()
         {
+        Debug.Log("TogglePauseCountdown");
         if (isCountdownRunning)
             {
             if (isCountdownPaused)
@@ -82,6 +93,7 @@ public class CountdownStarter : MonoBehaviour
 
     public void SetCountdownDuration(float duration)
         {
+        Debug.Log("SetCountdownDuration: " + duration);
         countdownDurationInput = duration;
         }
 
@@ -89,12 +101,14 @@ public class CountdownStarter : MonoBehaviour
         {
         if (float.TryParse(value, out float duration))
             {
+            Debug.Log("OnCountdownDurationInputValueChanged: " + duration);
             countdownDurationInput = duration;
             }
         }
 
     public void PlayFinishSound()
         {
+        Debug.Log("PlayFinishSound");
         audioSource.PlayOneShot(finishSound);
         }
     }
