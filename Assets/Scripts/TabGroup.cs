@@ -23,6 +23,7 @@ public class TabGroup : MonoBehaviour
         ResetTabs();
         if (selectedTab == null || button != selectedTab)
             {
+            button.background.color = Color.gray;
             }
         }
 
@@ -43,6 +44,7 @@ public class TabGroup : MonoBehaviour
         foreach (TabButton button in tabButtons)
             {
             button.background.sprite = buttonSprite;
+            button.background.color = Color.black;
             if (selectedTab != null && button == selectedTab) { continue; }
             button.labelText.fontStyle &= ~TMPro.FontStyles.Underline;
             }

@@ -41,7 +41,6 @@ public class Stopwatch : IStopwatch
 
     public void StartStopwatch()
         {
-        Debug.Log("Start Stop");
         StopStopwatch();
 
         if (!isPaused)
@@ -80,7 +79,6 @@ public class Stopwatch : IStopwatch
 
     public void ResumeStopwatch()
         {
-        Debug.Log("Resume Stop");
             startTime = DateTimeOffset.Now - pausedElapsedTime;
             isPaused = false;
         isRunningProperty.Value = true;
@@ -125,7 +123,6 @@ public class Stopwatch : IStopwatch
                 Timestamp = DateTimeOffset.Now
                 };
             lapDataSubject.OnNext(lapData);
-            Debug.Log("Lap Elapsed Time: " + lapElapsedTime.ToString());
             }
         }
     }

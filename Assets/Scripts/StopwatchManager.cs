@@ -5,15 +5,15 @@ using TMPro;
 using VContainer;
 using UniRx;
 using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
 
 public class StopwatchManager : MonoBehaviour
     {
+    [SerializeField] private TMP_Text stopwatchText;
     [SerializeField] private Button startButton;
     [SerializeField] private Button lapButton;
 
     [SerializeField] private TMP_Text lapTimestampText;
-    [SerializeField] private TMP_Text lapTextPrefab; // Reference to the TMP_Text prefab
+    [SerializeField] private GameObject lapGameObject; // Reference to the TMP_Text prefab
     [SerializeField] private Transform lapTextParent; // Parent transform to hold the lap text objects
 
     private bool isPaused;
@@ -22,6 +22,7 @@ public class StopwatchManager : MonoBehaviour
 
     private IStopwatch stopwatch;
     private ISystemClock systemClock;
+    private Stopwatch.StopwatchLapData lastLapData;
 
     [Inject]
     public void Construct(IStopwatch stopwatch, ISystemClock systemClock)
@@ -40,26 +41,35 @@ public class StopwatchManager : MonoBehaviour
             .AddTo(this);
 
         stopwatch.LapData
-            .Subscribe(lapData => lapTimestampText.text = FormatTimeSpan(lapData.ElapsedTime))
+            .Subscribe(lapData =>
+            {
+                CreateLapText(FormatTimeSpan(lapData.ElapsedTime));
+                lapTimestampText.text = FormatTimeSpan(lapData.ElapsedTime);
+                lastLapData = lapData; // Store the latest lap data
+            })
             .AddTo(this);
 
-        stopwatch.LapData
-            .Subscribe(lapData => CreateLapText(FormatTimeSpan(lapData.ElapsedTime)))
+        stopwatch.ElapsedTime
+            .Subscribe(time => stopwatchText.text = FormatTimeSpan(time))
             .AddTo(this);
+
         }
 
     public void StartStopwatch()
         {
         if (!stopwatch.IsRunning.Value && !isPaused)
             {
-            startButton.GetComponentInChildren<TMP_Text>().text = "Pause";
+            startButton.GetComponentInChildren<TMP_Text>().text = "Stop";
+            startButton.GetComponent<Image>().color = Color.red;
             lapButton.interactable = true;
             lapButton.GetComponentInChildren<TMP_Text>().text = "Lap";
+            lapButton.GetComponentInChildren<TMP_Text>().color = Color.white;
+            lapButton.GetComponent<Image>().color = new Color(0.18f, 0.18f, 0.18f);
             stopwatch.StartStopwatch();
             }
         else if (!stopwatch.IsRunning.Value && isPaused)
             {
-            startButton.GetComponentInChildren<TMP_Text>().text = "Pause";
+            startButton.GetComponentInChildren<TMP_Text>().text = "Stop";
             lapButton.interactable = true;
             isPaused = false;
             lapButton.GetComponentInChildren<TMP_Text>().text = "Lap";
@@ -69,11 +79,11 @@ public class StopwatchManager : MonoBehaviour
             {
             stopwatch.PauseStopwatch();
             startButton.GetComponentInChildren<TMP_Text>().text = "Resume";
+            startButton.GetComponent<Image>().color = new Color(0f, 0.466f, 0.133f);
             lapButton.GetComponentInChildren<TMP_Text>().text = "Reset";
             isPaused = true;
             }
         }
-
 
     public void ResetStopwatch()
         {
@@ -93,7 +103,11 @@ public class StopwatchManager : MonoBehaviour
         lapButton.interactable = false;
         isPaused = false;
         stopwatch.ResetStopwatch();
+
+        // Reset last lap data
+        lastLapData = null;
         }
+
 
     public void LapStopwatch()
         {
@@ -105,6 +119,7 @@ public class StopwatchManager : MonoBehaviour
             {
             ResetStopwatch();
             }
+
         }
 
     private void CreateLapText(string lapTime)
@@ -113,15 +128,36 @@ public class StopwatchManager : MonoBehaviour
         lapNumber++;
 
         // Create the lap text with lap number and timestamp
-        string lapTextContent = $"Lap Number {lapNumber}: {lapTime}";
+        string lapTextContent = $"{lapNumber}: {lapTime}";
+
+        GameObject lapObject = Instantiate(lapGameObject, lapTextParent);
 
         // Instantiate the lap text prefab and set its text
-        TMP_Text lapText = Instantiate(lapTextPrefab, lapTextParent);
-        lapText.text = lapTextContent;
-        lapText.gameObject.SetActive(true);
+        TMP_Text lapNumberText = lapObject.transform.Find("LapNumber")?.GetComponent<TMP_Text>();
+        TMP_Text lapLabelText = lapObject.transform.Find("LapLabel")?.GetComponent<TMP_Text>();
+        lapNumberText.text = $"{lapNumber}";
+        lapLabelText.text = lapTime;
+        lapNumberText.gameObject.SetActive(true);
+        lapLabelText.gameObject.SetActive(true);
+
+        // Compare the value of the last lap with the current lap
+        if (lastLapData != null)
+            {
+            Debug.Log(lapTime);
+            var currentLapTime = TimeSpan.ParseExact(lapTime, "hh\\:mm\\:ss\\:ff", null);
+            var lastLapTime = lastLapData.ElapsedTime;
+
+            // Change the color of the lap text to red if the current lap is shorter
+            if (currentLapTime < lastLapTime)
+                {
+                lapLabelText.color = Color.green;
+                }
+            }
 
         // Add the lap text to the list
-        lapTexts.Add(lapText);
+        lapTexts.Add(lapNumberText);
+        lapTexts.Add(lapLabelText);
+        lapObject.gameObject.SetActive(true);
 
         // Adjust the position of the lap texts (you may need to customize this based on your layout)
         for (int i = 0; i < lapTexts.Count; i++)
@@ -129,6 +165,8 @@ public class StopwatchManager : MonoBehaviour
             lapTexts[i].rectTransform.anchoredPosition = new Vector2(0f, -30f * i);
             }
         }
+
+
 
     private string FormatTimeSpan(TimeSpan timeSpan)
         {

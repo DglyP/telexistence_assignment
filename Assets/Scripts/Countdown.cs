@@ -11,6 +11,8 @@ public class Countdown : ICountdown
     private DateTimeOffset startTime;
     private TimeSpan remainingDuration;
     private TimeSpan originalDuration;
+    private Subject<bool> countdownDoneSubject = new Subject<bool>();
+    public IObservable<bool> CountdownDone => countdownDoneSubject.AsObservable();
 
     [Inject]
     public void Construct(ISystemClock systemClock)
@@ -22,26 +24,33 @@ public class Countdown : ICountdown
 
     public IObservable<TimeSpan> RemainingTime { get; private set; }
 
-    public void StartCountdown(TimeSpan duration)
+public void StartCountdown(TimeSpan duration)
+{
+    StopCountdown();
+
+    originalDuration = duration;
+    startTime = DateTimeOffset.Now;
+    remainingDuration = duration;
+
+    countdownDisposable = Observable.EveryUpdate()
+        .Select(_ => startTime.Add(remainingDuration) - DateTimeOffset.Now)
+        .Scan((acc, time) => time > TimeSpan.Zero ? time : TimeSpan.Zero)
+        .Do(remainingTime =>
         {
-        StopCountdown();
+            remainingTimeSubject.OnNext(remainingTime);
 
-        originalDuration = duration;
-        startTime = DateTimeOffset.Now;
-        remainingDuration = duration;
-
-        countdownDisposable = Observable.EveryUpdate()
-            .Select(_ => startTime.Add(remainingDuration) - DateTimeOffset.Now)
-            .Scan((acc, time) => time > TimeSpan.Zero ? time : TimeSpan.Zero)
-            .Do(remainingTime =>
+            // Check if the countdown is done and emit a value through the countdownDoneSubject
+            if (remainingTime <= TimeSpan.Zero)
             {
-                remainingTimeSubject.OnNext(remainingTime);
-            })
-            .TakeWhile(time => time > TimeSpan.Zero)
-            .Publish()
-            .RefCount()
-            .Subscribe();
-        }
+                countdownDoneSubject.OnNext(true);
+            }
+        })
+        .TakeWhile(time => time > TimeSpan.Zero)
+        .Publish()
+        .RefCount()
+        .Subscribe();
+}
+
 
     public void PauseCountdown()
         {

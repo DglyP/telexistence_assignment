@@ -13,7 +13,7 @@ public class UIAnimManager : MonoBehaviour
     void Start()
     {
         clockPanel.DOAnchorPos(Vector2.zero, 0.25f);
-        clockPanel.gameObject.SetActive(false);
+        clockPanel.gameObject.SetActive(true);
         stopwatchPanel.gameObject.SetActive(false);
         timerPanel.gameObject.SetActive(false);
     }
