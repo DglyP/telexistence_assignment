@@ -11,7 +11,6 @@ public class Countdown : ICountdown
     private DateTimeOffset startTime;
     private TimeSpan remainingDuration;
     private TimeSpan originalDuration;
-    public DateTimeOffset StartTime => startTime; // Add the StartTime property
 
     [Inject]
     public void Construct(ISystemClock systemClock)

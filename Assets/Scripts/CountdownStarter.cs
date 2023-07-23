@@ -1,4 +1,6 @@
 using System;
+using TMPro;
+using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -7,28 +9,43 @@ public class CountdownStarter : MonoBehaviour
     {
     [SerializeField] private float countdownDurationInput;
     [SerializeField] private Button startButton;
-    [SerializeField] private Button stopButton;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button pauseButton;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip finishSound;
 
     private ICountdown countdown;
+    private ISystemClock systemClock;
     private bool isCountdownRunning = false;
     private bool isCountdownPaused = false;
 
     [Inject]
-    public void Construct(ICountdown countdown)
+    public void Construct(ICountdown countdown, ISystemClock systemClock)
         {
         this.countdown = countdown;
+        this.systemClock = systemClock;
         }
 
     private void Start()
         {
+        systemClock.MyTime
+            .Subscribe(time => transform.Find("CurrentTime").gameObject.GetComponentInChildren<TMP_Text>().text = time.ToString("HH:mm:ss"))
+            .AddTo(this);
+
         startButton.onClick.AddListener(StartCountdown);
         resetButton.onClick.AddListener(ResetCountdown);
         pauseButton.onClick.AddListener(TogglePauseCountdown);
-        stopButton.onClick.AddListener(StopCountdown);
+
+        countdown.RemainingTime.Subscribe(OnRemainingTimeChanged).AddTo(this);
+        }
+
+    private void OnRemainingTimeChanged(TimeSpan remainingTime)
+        {
+        // When the remaining time reaches zero, play the finish sound
+        if (remainingTime <= TimeSpan.Zero && isCountdownRunning)
+            {
+            StopCountdown(); // Optional: Stop the countdown when it finishes
+            }
         }
 
     public void StartCountdown()
@@ -55,8 +72,7 @@ public class CountdownStarter : MonoBehaviour
 
     public void StopCountdown()
         {
-        Debug.Log("StopCountdown");
-        countdown.StopCountdown();
+        countdown.ResetCountdown();
         isCountdownRunning = false;
         isCountdownPaused = false;
         }
@@ -64,13 +80,13 @@ public class CountdownStarter : MonoBehaviour
     public void ResetCountdown()
         {
         Debug.Log("ResetCountdown");
+        isCountdownRunning = false;
+        isCountdownPaused = false;
         countdown.ResetCountdown();
         startButton.gameObject.SetActive(true);
         pauseButton?.gameObject.SetActive(false);
         resetButton?.gameObject.SetActive(false);
-        stopButton?.gameObject.SetActive(false);
-        isCountdownRunning = false;
-        isCountdownPaused = false;
+        pauseButton.GetComponentInChildren<TextMeshProUGUI>().text = "Pause";
         }
 
     public void TogglePauseCountdown()
@@ -81,10 +97,13 @@ public class CountdownStarter : MonoBehaviour
             if (isCountdownPaused)
                 {
                 countdown.ResumeCountdown();
+                pauseButton.GetComponentInChildren<TextMeshProUGUI>().text = "Pause";
                 }
             else
                 {
                 countdown.PauseCountdown();
+                pauseButton.GetComponentInChildren<TextMeshProUGUI>().text = "Resume";
+                resetButton.GetComponentInChildren<TextMeshProUGUI>().text = "Cancel";
                 }
 
             isCountdownPaused = !isCountdownPaused;
@@ -106,9 +125,4 @@ public class CountdownStarter : MonoBehaviour
             }
         }
 
-    public void PlayFinishSound()
-        {
-        Debug.Log("PlayFinishSound");
-        audioSource.PlayOneShot(finishSound);
-        }
     }

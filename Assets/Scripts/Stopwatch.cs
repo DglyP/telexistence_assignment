@@ -9,12 +9,15 @@ public class Stopwatch : IStopwatch
         {
         public TimeSpan ElapsedTime { get; set; }
         public DateTimeOffset Timestamp { get; set; }
+        public bool resetLaps { get; set; }
         }
 
     private IDisposable stopwatchDisposable;
     private Subject<TimeSpan> elapsedTimeSubject;
     private Subject<StopwatchLapData> lapDataSubject;
+    private Subject<bool> isPausedSubject = new Subject<bool>();
 
+    public IObservable<bool> IsPaused => isPausedSubject;
     public IObservable<TimeSpan> ElapsedTime { get; private set; }
     public IObservable<StopwatchLapData> LapData { get; private set; }
     private ReactiveProperty<bool> isRunningProperty = new ReactiveProperty<bool>(false);
@@ -38,6 +41,7 @@ public class Stopwatch : IStopwatch
 
     public void StartStopwatch()
         {
+        Debug.Log("Start Stop");
         StopStopwatch();
 
         if (!isPaused)
@@ -76,22 +80,19 @@ public class Stopwatch : IStopwatch
 
     public void ResumeStopwatch()
         {
-        if (stopwatchDisposable == null)
-            {
+        Debug.Log("Resume Stop");
             startTime = DateTimeOffset.Now - pausedElapsedTime;
-            isRunningProperty.Value = true;
-
-            stopwatchDisposable = Observable.EveryUpdate()
-                .Select(_ => DateTimeOffset.Now - startTime + totalElapsedTime)
-                .Do(elapsedTime =>
-                {
-                    elapsedTimeSubject.OnNext(elapsedTime);
-                })
-                .Publish()
-                .RefCount()
-                .Subscribe(_ => { });
             isPaused = false;
-            }
+        isRunningProperty.Value = true;
+        stopwatchDisposable = Observable.EveryUpdate()
+            .Select(_ => DateTimeOffset.Now - startTime + totalElapsedTime)
+            .Do(elapsedTime =>
+            {
+                elapsedTimeSubject.OnNext(elapsedTime);
+            })
+            .Publish()
+            .RefCount()
+            .Subscribe(_ => { });
         }
 
     public void ResetStopwatch()

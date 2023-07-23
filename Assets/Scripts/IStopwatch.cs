@@ -6,6 +6,8 @@ public interface IStopwatch
     {
     IReadOnlyReactiveProperty<bool> IsRunning { get; }
     IObservable<TimeSpan> ElapsedTime { get; }
+    IObservable<bool> IsPaused { get; }
+
     IObservable<StopwatchLapData> LapData { get; } 
     void StartStopwatch();
     void PauseStopwatch();

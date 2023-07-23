@@ -6,30 +6,29 @@ using VContainer;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Codice.Client.Common;
 
 public class ClockUI : MonoBehaviour
     {
     private TMP_Text[] textMeshPros;
-    //[SerializeField] private TMP_Text currentTimeText;
     [SerializeField] private TMP_Text countdownText;
     [SerializeField] private TMP_Text stopwatchText;
     [SerializeField] private TMP_Text lapTimestampText;
     [SerializeField] private GameObject clockGameObject;
     [SerializeField] private GameObject timeZoneGameObject;
 
-    [SerializeField] private TMP_Text lapTextPrefab; // Reference to the TMP_Text prefab
-    [SerializeField] private Transform lapTextParent; // Parent transform to hold the lap text objects
-
     [SerializeField] private GameObject timerbuttonPrefab; // Reference to the button prefab
     [SerializeField] private Transform timerbuttonParent; // Parent transform to hold the buttons
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip finishSound;
 
-    private List<TMP_Text> lapTexts = new List<TMP_Text>(); // List to keep track of lap text objects
-
+    private bool isCountdownRunning = false;
 
     private ISystemClock systemClock;
     private ICountdown countdown;
     private IStopwatch stopwatch;
     private ITimeZoneClock timeZoneClock;
+    private bool makingSound;
 
     [Inject]
     public void Construct(ISystemClock systemClock, ICountdown countdown, IStopwatch stopwatch, ITimeZoneClock timeZoneClock)
@@ -80,48 +79,30 @@ public class ClockUI : MonoBehaviour
             .Subscribe(lapData => lapTimestampText.text = FormatTimeSpan(lapData.ElapsedTime)) 
             .AddTo(this);
 
-        stopwatch.LapData
-            .Subscribe(lapData => CreateLapText(FormatTimeSpan(lapData.ElapsedTime)))
-            .AddTo(this);
-
-        CreateButtons(10, 0, 5); // Instantiate 10 buttons starting from 0 and incrementing by 5
+        CreateButtons(20, 5, 5); // Instantiate 4 buttons starting from 0 and incrementing by 5
 
         countdown.RemainingTime
-            .Subscribe(time => countdownText.text = FormatTimeSpan(time))
+            .Subscribe(time => UpdateCountdown(time))
             .AddTo(this);
+
         }
 
-    private void CreateLapText(string lapTime)
-        {
-        // Instantiate the lap text prefab and set its text
-        TMP_Text lapText = Instantiate(lapTextPrefab, lapTextParent);
-        lapText.text = lapTime;
-        lapText.gameObject.SetActive(true);
-
-        // Add the lap text to the list
-        lapTexts.Add(lapText);
-
-        // Adjust the position of the lap texts (you may need to customize this based on your layout)
-        for (int i = 0; i < lapTexts.Count; i++)
-            {
-            lapTexts[i].rectTransform.anchoredPosition = new Vector2(0f, -30f * i);
-            }
-        }
 
     private void CreateButtons(int numberOfButtons, int startingValue, int step)
         {
         // Instantiate buttons
         for (int i = 0; i < numberOfButtons; i++)
             {
-            // Calculate the value for the current button
+            // Calculate the value for the current button in TimeSpan format
             int buttonValue = startingValue + (i * step);
+            TimeSpan timeSpanValue = TimeSpan.FromSeconds(buttonValue);
 
             // Create a new button
             GameObject newButton = Instantiate(timerbuttonPrefab, timerbuttonParent);
             newButton.SetActive(true);
 
-            // Set the button name using the calculated value
-            newButton.GetComponentInChildren<TMP_Text>().text = buttonValue.ToString();
+            // Set the button name using the calculated value in TimeSpan format
+            newButton.GetComponentInChildren<TMP_Text>().text = FormatTimeSpan(timeSpanValue);
 
             // Add button click listener to start the countdown
             newButton.GetComponent<Button>().onClick.AddListener(() =>
@@ -139,7 +120,24 @@ public class ClockUI : MonoBehaviour
         countdown.StartCountdown(TimeSpan.FromSeconds(durationInSeconds));
         }
 
+    private void UpdateCountdown(TimeSpan time)
+        {
+        if (time <= TimeSpan.Zero && !makingSound)
+        {
+            makingSound = true;
+            Debug.Log(makingSound);
+            PlayFinishSound();
+        }
+        countdownText.text = FormatTimeSpan(time);
+        }
 
+    public void PlayFinishSound() //Sound Test
+        {
+            audioSource.PlayOneShot(finishSound);
+            countdown.ResetCountdown();
+            makingSound = false;
+            Debug.Log(makingSound);
+        }
     private string FormatTime(DateTimeOffset time)
         {
         return time.ToString("HH:mm:ss");
