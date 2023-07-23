@@ -1,13 +1,17 @@
 using System;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UniRx;
 using System.Collections;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 public class SystemClockTests
     {
     private SystemClock systemClock;
+    private List<TimeZoneInfo> timeZones;
+    private TimeZoneInfo selectedTimeZone;
 
     [SetUp]
     public void SetUp()
@@ -22,37 +26,81 @@ public class SystemClockTests
         systemClock = null;
         }
 
-    [UnityTest]
-    public IEnumerator TimerClock_CurrentTime_DistinctUntilChanged()
+    //[Test]
+    //public async Task System_Time_is_changing()
+    //    {
+    //    var timeTask = SystemClockTimeChanges(1);
+
+    //    var breakfastTasks = new List<Task> { timeTask };
+    //    while (breakfastTasks.Count > 0)
+    //        {
+    //        Task finishedTask = await Task.WhenAny(breakfastTasks);
+    //        if (finishedTask == timeTask)
+    //            {
+    //            Debug.Log("time is ready");
+    //            }
+    //        breakfastTasks.Remove(finishedTask);
+    //        }
+    //    }
+
+    //public async Task<MyTime> SystemClockTimeChanges(int howmany)
+    //    {
+    //    DateTimeOffset initialTime = DateTimeOffset.Now;
+    //    DateTimeOffset resultTime = DateTimeOffset.MinValue;
+    //    systemClock.MyTime
+    //        .Subscribe(time => resultTime = time);
+    //    await Task.Delay(3000);
+    //    Debug.Log(resultTime);
+
+    //    Debug.Log(initialTime);
+
+    //    Assert.AreEqual(initialTime, resultTime);
+    //    return new MyTime();
+    //    }
+    //public struct MyTime
+    //    {
+
+    //    }
+
+    [Test]
+    public async Task System_Clock_MyTime_Test()
         {
-        // Arrange: Set up your test environment here
+        // Arrange
         DateTimeOffset initialTime = DateTimeOffset.Now;
-
-        // Act: Perform actions to test the behavior
         DateTimeOffset resultTime = DateTimeOffset.MinValue;
-        systemClock.CurrentTime.Subscribe(time => resultTime = time);
 
-        // Wait for a short time (a single frame) to allow the CurrentTime observable to emit a value
-        yield return null;
-
-        // Assert: Make assertions about the expected outcome
-        Assert.AreEqual(initialTime, resultTime);
-        }
-
-    [UnityTest]
-    public IEnumerator TimerClock_MyTime_DistinctUntilChanged()
-        {
-        // Arrange: Set up your test environment here
-        DateTimeOffset initialTime = DateTimeOffset.Now;
-
-        // Act: Perform actions to test the behavior
-        DateTimeOffset resultTime = DateTimeOffset.MinValue;
+        // Act: Subscribe to the MyTime event and set the resultTime when it's triggered
         systemClock.MyTime.Subscribe(time => resultTime = time);
 
-        // Wait for a short time (a single frame) to allow the MyTime observable to emit a value
-        yield return null;
+        // Wait for a short delay (you can adjust the delay as needed for your test)
+        await Task.Delay(1000);
 
-        // Assert: Make assertions about the expected outcome
-        Assert.AreEqual(initialTime, resultTime);
+        // Assert: Check if resultTime has been updated after subscribing to MyTime
+        Assert.AreNotEqual(initialTime, resultTime, "The system time should change when MyTime event is triggered.");
         }
+
+
+    [Test]
+    public async Task System_Clock_CurrentTime_Test()
+        {
+        // Arrange
+        DateTimeOffset initialTime = DateTimeOffset.Now;
+        DateTimeOffset resultTime = DateTimeOffset.MinValue;
+
+        // Get a random time zone (you can replace this with any valid TimeZoneInfo object)
+        TimeZoneInfo randomTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+
+        // Set the selected time zone
+        systemClock.SelectedTimeZone = randomTimeZone;
+
+        // Act: Subscribe to the MyTime event and set the resultTime when it's triggered
+        systemClock.CurrentTime.Subscribe(time => resultTime = time);
+
+        // Wait for a short delay (you can adjust the delay as needed for your test)
+        await Task.Delay(1000);
+
+        // Assert: Check if resultTime has been updated after subscribing to MyTime
+        Assert.AreNotEqual(initialTime, resultTime, "The system time should change when MyTime event is triggered.");
+        }
+
     }

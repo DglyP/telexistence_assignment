@@ -1,97 +1,56 @@
-using System;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
+using System;
 using UniRx;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using UniRx.Triggers;
+using System.Collections;
 
 public class TimerTests
     {
-    private TimerClock timerClock;
+    private Countdown countdown;
 
     [SetUp]
     public void SetUp()
         {
-        timerClock = new TimerClock();
+        countdown = new Countdown();
+        }
+
+    [TearDown]
+    public void TearDown()
+        {
+        countdown.StopCountdown();
+        countdown = null;
         }
 
     [Test]
-    public void TimerClock_CurrentTime_NotNull()
+    public void Countdown_StartTimer()
         {
-        // Arrange & Act
-        var currentTime = timerClock.CurrentTime;
+        countdown.StartCountdown(TimeSpan.FromSeconds(10));
 
-        // Assert
-        Assert.NotNull(currentTime);
+        Assert.IsTrue(countdown.IsRunning.Value);
         }
 
     [Test]
-    public void TimerClock_CurrentTime_DistinctUntilChanged()
+    public void Countdown_StopTimer()
         {
-        // Arrange & Act
-        var currentTime = timerClock.CurrentTime;
+        countdown.StartCountdown(TimeSpan.FromSeconds(10));
+        countdown.StopCountdown();
 
-        // Assert
-        bool valuesAreDistinct = true;
-        currentTime.Buffer(2, 1).Subscribe(buffer =>
-        {
-            if (buffer.Count == 2 && buffer[0] == buffer[1])
-                valuesAreDistinct = false;
-        });
-
-        Assert.IsTrue(valuesAreDistinct);
+        Assert.IsFalse(countdown.IsRunning.Value);
         }
 
     [Test]
-    public void TimerClock_MyTime_NotNull()
-        {
-        // Arrange & Act
-        var myTime = timerClock.MyTime;
+    public void Countdown_ResetTimer()
+        { 
+        TimeSpan elapsedTimeAfterReset = TimeSpan.Zero;
+        countdown.StartCountdown(TimeSpan.FromSeconds(10));
+        countdown.StopCountdown();
 
-        // Assert
-        Assert.NotNull(myTime);
+        // Check if the stopwatch is not running
+        Assert.IsFalse(countdown.IsRunning.Value);
         }
 
-    [Test]
-    public void TimerClock_MyTime_DistinctUntilChanged()
-        {
-        // Arrange & Act
-        var myTime = timerClock.MyTime;
-
-        // Assert
-        bool valuesAreDistinct = true;
-        myTime.Buffer(2, 1).Subscribe(buffer =>
-        {
-            if (buffer.Count == 2 && buffer[0] == buffer[1])
-                valuesAreDistinct = false;
-        });
-
-        Assert.IsTrue(valuesAreDistinct);
-        }
-
-    [Test]
-    public void TimerClock_StartTimer_TimerTicks()
-        {
-        // Arrange & Act
-        bool timerTicked = false;
-        timerClock.Timer.Subscribe(_ => timerTicked = true);
-        timerClock.StartTimer();
-
-        // Assert
-        Assert.IsTrue(timerTicked);
-        }
-
-    [Test]
-    public void TimerClock_Timer_DistinctUntilChanged()
-        {
-        // Arrange & Act
-        var timer = timerClock.Timer;
-
-        // Assert
-        bool valuesAreDistinct = true;
-        timer.Buffer(2, 1).Subscribe(buffer =>
-        {
-            if (buffer.Count == 2 && buffer[0] == buffer[1])
-                valuesAreDistinct = false;
-        });
-
-        Assert.IsTrue(valuesAreDistinct);
-        }
     }
