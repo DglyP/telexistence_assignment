@@ -90,7 +90,6 @@ public class Stopwatch : IStopwatch
                 .Publish()
                 .RefCount()
                 .Subscribe(_ => { });
-
             isPaused = false;
             }
         }

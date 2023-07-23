@@ -1,7 +1,7 @@
 using System;
 using UniRx;
 
-public class SystemClock : ISystemClock , ITimeZoneClock
+public class SystemClock : ISystemClock, ITimeZoneClock
     {
     public TimeZoneInfo SelectedTimeZone { get; set; }
     public IObservable<TimeZoneInfo> CurrentTimeZone => Observable.Return(SelectedTimeZone);
